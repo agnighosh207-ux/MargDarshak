@@ -32,6 +32,8 @@ export function LoginPage() {
     <AuthLayout>
       <SignIn 
         appearance={appearance}
+        routing="path"
+        path="/login"
         signUpUrl="/register"
         fallbackRedirectUrl="/dashboard"
         forceRedirectUrl="/dashboard"
