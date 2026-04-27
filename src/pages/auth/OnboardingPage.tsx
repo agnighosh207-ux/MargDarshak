@@ -77,6 +77,7 @@ export function OnboardingPage() {
 
     if (error) {
       console.error('Failed to create profile', error)
+      alert(`Error creating profile: ${error.message}\n\nPlease make sure you have run the latest database-init.sql in your Supabase SQL editor!`)
       setStep(3)
     } else {
       setTimeout(() => navigate('/dashboard', { replace: true }), 1500)
