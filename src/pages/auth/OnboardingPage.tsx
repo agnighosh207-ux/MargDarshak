@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { cn } from '../../lib/utils'
+import { useProfile } from '../../hooks/useProfile'
 
 const EXAM_GROUPS = [
   { category: '⚙️ Engineering', exams: ['JEE Main','JEE Advanced','WBJEE','MHT CET','BITSAT','VITEEE','GATE','NEST'] },
@@ -20,6 +21,7 @@ const EXAM_GROUPS = [
 export function OnboardingPage() {
   const { user, isLoaded } = useUser()
   const navigate = useNavigate()
+  const { refreshProfile } = useProfile()
   
   const [step, setStep] = useState(1)
   const [selectedExams, setSelectedExams] = useState<string[]>([])
@@ -80,6 +82,7 @@ export function OnboardingPage() {
       alert(`Error creating profile: ${error.message}\n\nPlease make sure you have run the latest database-init.sql in your Supabase SQL editor!`)
       setStep(3)
     } else {
+      await refreshProfile()
       setTimeout(() => navigate('/dashboard', { replace: true }), 1500)
     }
   }
