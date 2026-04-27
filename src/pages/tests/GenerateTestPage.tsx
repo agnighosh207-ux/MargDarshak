@@ -17,7 +17,7 @@ export function GenerateTestPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
 
-  const [exam, setExam] = useState('')
+  const [exam, setExam] = useState(profile?.target_exams?.length === 1 ? profile.target_exams[0] : '')
   const [subject, setSubject] = useState('')
   const [topic, setTopic] = useState('')
   const [difficulty, setDifficulty] = useState('Medium')
@@ -38,10 +38,10 @@ export function GenerateTestPage() {
   const [examSubjects, setExamSubjects] = useState<string[]>([])
 
   useEffect(() => {
-    if (profile?.target_exams && profile.target_exams.length === 1) {
+    if (profile?.target_exams && profile.target_exams.length === 1 && !exam) {
       setExam(profile.target_exams[0])
     }
-  }, [profile])
+  }, [profile, exam])
 
   useEffect(() => {
     async function loadSubjects() {
@@ -55,11 +55,7 @@ export function GenerateTestPage() {
     loadSubjects()
   }, [exam])
 
-  useEffect(() => {
-    if (subject && topic) {
-      setTestName(`${subject} - ${topic} Test`)
-    }
-  }, [subject, topic])
+  const derivedTestName = testName || (subject && topic ? `${subject} - ${topic} Test` : '')
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
@@ -129,7 +125,7 @@ For mixed: include both mcq and numerical questions.`
 
       const { data, error } = await supabase.from('mock_tests').insert({
         user_id: profile.id,
-        test_name: testName || `${subject} - ${topic} Test`,
+        test_name: derivedTestName || `${subject} - ${topic} Test`,
         exam_code: exam,
         subject,
         topic,
@@ -466,6 +462,7 @@ Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
             <input 
               type="text" 
               value={testName}
+              placeholder={subject && topic ? `${subject} - ${topic} Test` : "Give your test a name..."}
               onChange={(e) => setTestName(e.target.value)}
               className="w-full bg-[#0a0c14] border border-border rounded-lg px-4 py-3 text-white input-glow"
             />

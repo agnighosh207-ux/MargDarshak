@@ -213,26 +213,12 @@ export function SettingsPage() {
     setIsDeleteOpen(false)
   }
 
-  // --- RENDER HELPERS ---
-  const CustomToggle = ({ checked, onChange }: { checked: boolean, onChange: (c: boolean) => void }) => (
-    <button 
-      onClick={() => onChange(!checked)}
-      className={cn("w-10 h-6 rounded-full flex items-center p-1 transition-colors duration-200", checked ? "bg-primary" : "bg-surface-2 border border-border")}
-    >
-      <div className={cn("w-4 h-4 rounded-full transition-transform duration-200", checked ? "bg-black translate-x-4" : "bg-muted translate-x-0")} />
-    </button>
-  )
-
   const TABS = [
     { id: 'Profile', icon: User },
     { id: 'Exam Settings', icon: Target },
     { id: 'Account', icon: Shield },
     { id: 'Notifications', icon: Bell }
   ]
-
-  // We need to define Target since it's not imported but used in TABS
-  // Let's replace Target with Settings2 which is imported
-  TABS[1].icon = Settings2
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
@@ -515,5 +501,16 @@ export function SettingsPage() {
       </Modal>
 
     </div>
+  )
+}
+
+function CustomToggle({ checked, onChange }: { checked: boolean, onChange: (c: boolean) => void }) {
+  return (
+    <button 
+      onClick={() => onChange(!checked)}
+      className={cn("w-10 h-6 rounded-full flex items-center p-1 transition-colors duration-200", checked ? "bg-primary" : "bg-surface-2 border border-border")}
+    >
+      <div className={cn("w-4 h-4 rounded-full transition-transform duration-200", checked ? "bg-black translate-x-4" : "bg-muted translate-x-0")} />
+    </button>
   )
 }

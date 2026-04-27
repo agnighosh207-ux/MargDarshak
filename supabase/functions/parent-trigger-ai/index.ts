@@ -1,12 +1,14 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-serve(async (req) => {
-  const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+Deno.serve(async (req) => {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    return new Response(JSON.stringify({ error: "Missing environment variables" }), { status: 500 })
+  }
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
   // 1. Fetch performance data for all users
   const { data: users, error } = await supabase
@@ -15,6 +17,7 @@ serve(async (req) => {
     .eq('parent_telemetry_enabled', true)
 
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+  if (!users) return new Response(JSON.stringify({ status: 'success', processed: 0 }), { status: 200 })
 
   for (const user of users) {
     // Fetch rank change and focus violations
@@ -25,14 +28,12 @@ serve(async (req) => {
       .order('created_at', { ascending: false })
       .limit(2)
 
-    const rankDiff = (rankUpdates?.[1]?.predicted_rank || 0) - (rankUpdates?.[0]?.predicted_rank || 0)
+    let rankDiff = 0
+    if (rankUpdates && rankUpdates.length >= 2) {
+      rankDiff = (rankUpdates[1].predicted_rank || 0) - (rankUpdates[0].predicted_rank || 0)
+    }
     
-    // Synthesis via Gemini (Mocked logic for demo, in real it would be a fetch call)
-    const prompt = `Generate a 1-sentence Hinglish update for a parent. 
-    Student: ${user.full_name}. 
-    Rank Change: ${rankDiff > 0 ? 'Improved' : 'Dropped'} by ${Math.abs(rankDiff)}.
-    Style: Professional yet empathetic.`
-
+    // Synthesis via Gemini (Mocked logic for demo)
     const message = `${user.full_name}'s consistency was great, but focus mode dropped by 15%. Rank improved by ${Math.abs(rankDiff)} positions! 🚀`
 
     // 2. Log to broadcast table
@@ -48,3 +49,4 @@ serve(async (req) => {
     headers: { "Content-Type": "application/json" },
   })
 })
+

@@ -42,13 +42,10 @@ export function DashboardPage() {
   const [weakChapters, setWeakChapters] = useState<any[]>([])
   const [todayPlan, setTodayPlan] = useState<any[]>([])
   const [examCountdown, setExamCountdown] = useState<{ days: number, name: string } | null>(null)
-  const [tagline, setTagline] = useState('')
+  const [tagline, setTagline] = useState(() => getRandomTagline())
 
   const [isLogSessionModalOpen, setIsLogSessionModalOpen] = useState(false)
 
-  useEffect(() => {
-    setTagline(getRandomTagline())
-  }, [])
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -520,7 +517,6 @@ function LogSessionModal({ isOpen, onClose, todayStudyMinutes, onSessionLogged }
     }
     if (isOpen) {
       loadSubjs()
-      setSessionDate(new Date().toISOString().split('T')[0])
     }
   }, [profile, isOpen])
 
@@ -660,31 +656,25 @@ function DailyChecklist() {
   const { awardXP } = useProfile()
   const { toast } = useToast()
   
-  const todayStr = new Date().toISOString().split('T')[0]
-  
-  const [tasks, setTasks] = useState<{ id: string, text: string, completed: boolean, xp: number }[]>([
-    { id: 'mock_test', text: '1 mock test do', completed: false, xp: 20 },
-    { id: 'doubt_solve', text: '1 doubt solve karo', completed: false, xp: 10 },
-    { id: 'study_session', text: 'Study session log karo', completed: false, xp: 15 }
-  ])
+  const [tasks, setTasks] = useState<{ id: string, text: string, completed: boolean, xp: number }[]>(() => {
+    const savedDate = localStorage.getItem('daily_checklist_date')
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (savedDate === todayStr) {
+      const savedTasks = localStorage.getItem('daily_checklist_tasks')
+      if (savedTasks) return JSON.parse(savedTasks)
+    }
+    return [
+      { id: 'mock_test', text: '1 mock test do', completed: false, xp: 20 },
+      { id: 'doubt_solve', text: '1 doubt solve karo', completed: false, xp: 10 },
+      { id: 'study_session', text: 'Study session log karo', completed: false, xp: 15 }
+    ]
+  })
 
   useEffect(() => {
-    const savedDate = localStorage.getItem('daily_checklist_date')
-    if (savedDate !== todayStr) {
-      // Reset for a new day
-      localStorage.setItem('daily_checklist_date', todayStr)
-      localStorage.setItem('daily_checklist_tasks', JSON.stringify([
-        { id: 'mock_test', text: '1 mock test do', completed: false, xp: 20 },
-        { id: 'doubt_solve', text: '1 doubt solve karo', completed: false, xp: 10 },
-        { id: 'study_session', text: 'Study session log karo', completed: false, xp: 15 }
-      ]))
-    } else {
-      const savedTasks = localStorage.getItem('daily_checklist_tasks')
-      if (savedTasks) {
-        setTasks(JSON.parse(savedTasks))
-      }
-    }
-  }, [todayStr])
+    const todayStr = new Date().toISOString().split('T')[0]
+    localStorage.setItem('daily_checklist_date', todayStr)
+    localStorage.setItem('daily_checklist_tasks', JSON.stringify(tasks))
+  }, [tasks])
 
   const toggleTask = async (id: string) => {
     const task = tasks.find(t => t.id === id)

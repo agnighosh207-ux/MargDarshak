@@ -1,6 +1,12 @@
 -- ==========================================
 -- 1. CLEANUP (DELETE EXISTING TABLES)
 -- ==========================================
+DROP TABLE IF EXISTS public.pending_whatsapp_broadcast CASCADE;
+DROP TABLE IF EXISTS public.bounty_matches CASCADE;
+DROP TABLE IF EXISTS public.bounty_queue CASCADE;
+DROP TABLE IF EXISTS public.forum_answers CASCADE;
+DROP TABLE IF EXISTS public.forum_questions CASCADE;
+DROP TABLE IF EXISTS public.predictive_ranks CASCADE;
 DROP TABLE IF EXISTS public.rank_updates CASCADE;
 DROP TABLE IF EXISTS public.app_config CASCADE;
 DROP TABLE IF EXISTS public.study_plan CASCADE;
@@ -11,25 +17,45 @@ DROP TABLE IF EXISTS public.mock_tests CASCADE;
 DROP TABLE IF EXISTS public.exams CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
 
--- If you have other tables you want to delete, you can drop them using the same format:
--- DROP TABLE IF EXISTS public.your_table_name CASCADE;
-
 -- ==========================================
 -- 2. CREATE NEW TABLES
 -- ==========================================
 
--- PROFILES (uses Clerk user ID as primary key)
+-- PROFILES (Sync with ProfileContext.tsx)
 CREATE TABLE public.profiles (
   id text PRIMARY KEY,
   username text UNIQUE NOT NULL,
   email text NOT NULL,
   full_name text,
   avatar_url text,
-  target_exams text[] DEFAULT ARRAY['JEE Advanced'],
+  target_exams text[] DEFAULT ARRAY['JEE_ADV'],
+  target_year integer,
+  
+  -- Gamification & Economy
   streak_days integer DEFAULT 0,
+  streak_count integer DEFAULT 0,
+  streak_freeze_count integer DEFAULT 0,
   total_xp integer DEFAULT 0,
-  is_admin boolean DEFAULT false,
-  created_at timestamptz DEFAULT now() NOT NULL
+  coins integer DEFAULT 0,
+  credits_cr integer DEFAULT 0,
+  inventory jsonb DEFAULT '[]',
+  
+  -- Auth & Meta
+  role text DEFAULT 'student' CHECK (role IN ('student', 'admin')),
+  plan text DEFAULT 'eklavya' CHECK (plan IN ('eklavya', 'arjuna', 'dronacharya', 'brahmastra')),
+  last_study_date date,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  
+  -- Referral System
+  referral_code text UNIQUE,
+  referred_by text,
+  referral_count integer DEFAULT 0,
+  referral_source text,
+  subscription_expires_at timestamptz,
+  
+  -- Parent Features
+  parent_phone text,
+  parent_telemetry_enabled boolean DEFAULT false
 );
 ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 
@@ -89,7 +115,8 @@ CREATE TABLE public.mock_tests (
   accuracy numeric,
   time_taken_seconds integer,
   status text DEFAULT 'pending' CHECK (status IN ('pending','in_progress','completed')),
-  taken_at timestamptz DEFAULT now() NOT NULL
+  taken_at timestamptz DEFAULT now() NOT NULL,
+  submission_hour integer
 );
 CREATE INDEX idx_mock_tests_user ON public.mock_tests(user_id);
 CREATE INDEX idx_mock_tests_date ON public.mock_tests(taken_at DESC);
@@ -106,7 +133,6 @@ CREATE TABLE public.doubts (
   resolved boolean DEFAULT false,
   created_at timestamptz DEFAULT now() NOT NULL
 );
-CREATE INDEX idx_doubts_user ON public.doubts(user_id);
 
 -- STUDY SESSIONS
 CREATE TABLE public.study_sessions (
@@ -132,9 +158,12 @@ CREATE TABLE public.chapter_performance (
   accuracy numeric GENERATED ALWAYS AS (
     CASE WHEN attempts > 0 THEN (correct::numeric/attempts)*100 ELSE 0 END
   ) STORED,
+  srs_level integer DEFAULT 0,
+  next_revision_at timestamptz DEFAULT now(),
   last_attempted timestamptz DEFAULT now(),
   UNIQUE(user_id, exam_code, subject, chapter)
 );
+
 
 -- STUDY PLAN
 CREATE TABLE public.study_plan (
@@ -149,6 +178,65 @@ CREATE TABLE public.study_plan (
   created_at timestamptz DEFAULT now()
 );
 
+-- FORUM
+CREATE TABLE public.forum_questions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id text REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  title text NOT NULL,
+  content text NOT NULL,
+  exam_code text,
+  upvotes integer DEFAULT 0,
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.forum_answers (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  question_id uuid REFERENCES public.forum_questions(id) ON DELETE CASCADE NOT NULL,
+  user_id text REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  content text NOT NULL,
+  upvotes integer DEFAULT 0,
+  is_accepted boolean DEFAULT false,
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+
+-- PREDICTIVE RANKS (used in Edge Function)
+CREATE TABLE public.predictive_ranks (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id text REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  predicted_rank integer NOT NULL,
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+
+-- BOUNTY ARENA
+CREATE TABLE public.bounty_queue (
+  user_id text PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+  wager_amount integer NOT NULL,
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.bounty_matches (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_1_id text REFERENCES public.profiles(id),
+  player_2_id text REFERENCES public.profiles(id),
+  wager_amount integer NOT NULL,
+  questions jsonb NOT NULL,
+  p1_answers jsonb DEFAULT '[]',
+  p2_answers jsonb DEFAULT '[]',
+  match_status text DEFAULT 'active' CHECK (match_status IN ('active', 'completed')),
+  winner_id text REFERENCES public.profiles(id),
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+
+-- WHATSAPP BROADCASTS
+CREATE TABLE public.pending_whatsapp_broadcast (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id text REFERENCES public.profiles(id),
+  parent_phone text,
+  message text NOT NULL,
+  status text DEFAULT 'pending',
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+
 -- APP CONFIG (admin controlled)
 CREATE TABLE public.app_config (
   id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -161,17 +249,8 @@ CREATE TABLE public.app_config (
 INSERT INTO public.app_config (is_maintenance_mode, is_development_mode, maintenance_message, last_updated_by)
 VALUES (false, false, 'System undergoing maintenance. Back shortly.', 'system_init');
 
--- RANK UPDATES LOG
-CREATE TABLE public.rank_updates (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id text REFERENCES public.profiles(id),
-  user_name text NOT NULL,
-  old_rank integer NOT NULL,
-  new_rank integer NOT NULL,
-  reason text,
-  created_at timestamptz DEFAULT now() NOT NULL
-);
-
--- Enable realtime on rank_updates and app_config
-ALTER PUBLICATION supabase_realtime ADD TABLE public.rank_updates;
+-- Enable realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE public.app_config;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.bounty_matches;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.bounty_queue;
+
