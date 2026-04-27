@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useUser, useClerk } from '@clerk/clerk-react'
-import { Camera, Check, X, Loader2, LogOut, AlertTriangle, User, Settings2, Bell, Shield, Target } from 'lucide-react'
+import { Camera, Check, X, Loader2, LogOut, AlertTriangle, User, Bell, Shield, Target } from 'lucide-react'
 
 import { useProfile } from '../../hooks/useProfile'
 import { supabase } from '../../lib/supabase'

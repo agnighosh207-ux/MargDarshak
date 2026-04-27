@@ -42,7 +42,7 @@ export function DashboardPage() {
   const [weakChapters, setWeakChapters] = useState<any[]>([])
   const [todayPlan, setTodayPlan] = useState<any[]>([])
   const [examCountdown, setExamCountdown] = useState<{ days: number, name: string } | null>(null)
-  const [tagline, setTagline] = useState(() => getRandomTagline())
+  const [tagline] = useState(() => getRandomTagline())
 
   const [isLogSessionModalOpen, setIsLogSessionModalOpen] = useState(false)
 

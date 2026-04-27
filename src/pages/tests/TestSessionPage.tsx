@@ -65,7 +65,7 @@ export function TestSessionPage() {
     loadTest()
   }, [id, profile, navigate])
 
-  const handleSubmitRef = useRef<() => void>();
+  const handleSubmitRef = useRef<(() => void) | null>(null);
 
   // Timer
   useEffect(() => {
