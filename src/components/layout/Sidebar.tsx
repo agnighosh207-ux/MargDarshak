@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, FileText, MessageCircle, BarChart3, Calendar, Settings, LogOut, BookOpen, MessageSquare, CreditCard, Gift, Shield, Trophy, Brain, Phone, Sparkles, Smartphone, Flame, Coins, Swords } from 'lucide-react'
+import { LayoutDashboard, FileText, MessageCircle, BarChart3, Calendar, Settings, LogOut, BookOpen, MessageSquare, CreditCard, Gift, Shield, Trophy, Brain, Phone, Sparkles, Smartphone, Flame, Coins, Swords, Target, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { useProfile } from '../../hooks/useProfile'
@@ -8,11 +8,12 @@ import { cn } from '../../lib/utils'
 
 const NAV_ITEMS = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'Mock Tests', path: '/tests', icon: FileText },
+  { name: 'Mock Tests', path: '/tests', icon: Target },
   { name: 'AI Doubt Solver', path: '/doubts', icon: MessageCircle },
-  { name: 'Community Forum', path: '/forum', icon: MessageSquare },
+  { name: 'Community Forum', path: '/forum', icon: Users },
   { name: 'Shadow Matrix', path: '/matrix', icon: Trophy },
   { name: 'Revision Hub', path: '/revision', icon: Brain },
+  { name: 'Marg Store', path: '/store', icon: Coins },
   { name: 'Analytics', path: '/analytics', icon: BarChart3 },
   { name: 'Chapters', path: '/chapters', icon: BookOpen },
   { name: 'PYQ Library', path: '/library', icon: FileText },

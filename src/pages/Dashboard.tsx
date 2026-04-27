@@ -211,12 +211,15 @@ export function DashboardPage() {
                 </div>
                 <div className="text-[10px] text-muted uppercase tracking-widest font-black mt-1">Day Streak</div>
               </div>
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3 rounded-xl text-center shadow-[0_0_20px_rgba(255,255,255,0.05)]">
-                <div className="text-2xl font-black text-primary tracking-tighter flex items-center justify-center gap-2">
-                  <Coins className="w-6 h-6" /> <AnimatedNumber value={profile?.coins || 0} />
+              <Link to="/store" className="bg-[#141828] border border-[rgba(255,255,255,0.07)] p-4 md:p-5 rounded-2xl flex items-center justify-between shadow-lg hover:border-primary/30 transition-all cursor-pointer group">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Coins className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
+                    <span className="text-2xl font-bold text-white">{profile?.coins || 0}</span>
+                  </div>
+                  <span className="text-xs font-bold text-muted uppercase tracking-widest group-hover:text-amber-400 transition-colors">Marg-Coins</span>
                 </div>
-                <div className="text-[10px] text-muted uppercase tracking-widest font-black mt-1">Marg-Coins</div>
-              </div>
+              </Link>
               <div className="bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3 rounded-xl text-center shadow-[0_0_20px_rgba(245,158,11,0.1)]">
                 <div className="text-2xl font-black text-accent tracking-tighter flex items-center justify-center gap-2">
                   ⚡ <AnimatedNumber value={profile?.total_xp || 0} />

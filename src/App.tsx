@@ -41,6 +41,7 @@ const RevisionHubPage = React.lazy(() => import('./pages/revision/RevisionHubPag
 const ParentConnectPage = React.lazy(() => import('./pages/settings/ParentConnectPage').then(m => ({ default: m.ParentConnectPage })))
 const BrahmastraHubPage = React.lazy(() => import('./pages/brahmastra/BrahmastraHubPage').then(m => ({ default: m.BrahmastraHubPage })))
 const BountyArenaPage = React.lazy(() => import('./pages/BountyArenaPage').then(m => ({ default: m.BountyArenaPage })))
+const MargStorePage = React.lazy(() => import('./pages/store/MargStorePage').then(m => ({ default: m.MargStorePage })))
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })))
 
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
@@ -132,6 +133,7 @@ export default function App() {
               <Route path="/parent-connect" element={<ProtectedRoute><DashboardLayout title="Parent Connect"><PageTransition><ParentConnectPage /></PageTransition></DashboardLayout></ProtectedRoute>} />
               <Route path="/brahmastra" element={<ProtectedRoute><DashboardLayout title="Brahmastra Exclusives"><PageTransition><BrahmastraHubPage /></PageTransition></DashboardLayout></ProtectedRoute>} />
               <Route path="/bounty" element={<ProtectedRoute><DashboardLayout title="Bounty Arena"><PageTransition><BountyArenaPage /></PageTransition></DashboardLayout></ProtectedRoute>} />
+              <Route path="/store" element={<ProtectedRoute><DashboardLayout title="Marg Store"><PageTransition><MargStorePage /></PageTransition></DashboardLayout></ProtectedRoute>} />
               <Route path="/support" element={<DashboardLayout title="Support"><PageTransition><SupportPage /></PageTransition></DashboardLayout>} />
               
               {/* Admin Routes */}
